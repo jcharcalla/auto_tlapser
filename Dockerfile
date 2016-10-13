@@ -18,7 +18,7 @@ ffmpeg \
 imagemagick \
 && rm -rf /var/lib/apt/lists/*
 
-COPY auto_timelapse.sh /usr/local/bin/
+COPY auto_tlapser.sh /usr/local/bin/
 
-ENTRYPOINT ["/usr/local/bin/auto_timelapse.sh"]
+ENTRYPOINT ["/usr/local/bin/auto_tlapser.sh"]
 CMD ["-h"]
