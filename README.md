@@ -1,7 +1,7 @@
 # auto_tlapser
 Docker container and script for creating videos or slideshows from a directory full of images. This script relies on ffmpeg and image magic to create transitions and convert images to movies. 
-Timelapse example: https://www.youtube.com/watch?v=bthl-kkmadU
-Slideshow example:
+- Timelapse example: https://www.youtube.com/watch?v=bthl-kkmadU
+- Slideshow example:
 
 Jason Charcalla 06292016
 
@@ -27,7 +27,7 @@ The auto_tlapser.sh can be run by itself or within a Docker container.
 ### Docker usage:
 This container requires a rw mount point which contains images. Your images will be overwritten!
 
-#### Produce a slide show
-	sudo docker run -v /mnt/:/mnt timelapse.1 -R 2k -F 15 -D 10 -C black -T 3 -I /mnt/test01/ -O /mnt/test.mp4 -E JPG
+#### Produce a slide show with an audio track
+	sudo docker run -v /mnt/:/mnt timelapse.1 -R 2k -F 15 -D 10 -C black -T 3 -I /mnt/test01/ -O /mnt/test.mp4 -E JPG -A /mnt/test01/audiotrack.mp3
 #### Produce a timelapse
-	sudo docker run -v /mnt/:/mnt timelapse.1 -R 2k -F 15 -D 0 -C black -T 0 -I /mnt/test01/ -O /mnt/test.mp4 -E J
+	sudo docker run -v /mnt/:/mnt timelapse.1 -R 2k -F 15 -D 0 -C black -T 0 -I /mnt/test01/ -O /mnt/test.mp4 -E JPG
