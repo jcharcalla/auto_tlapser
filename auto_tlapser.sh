@@ -3,18 +3,22 @@
 #
 # Auto timelapse script
 #
+#
 
 print_usage() {
 	cat <<EOF
 #
 # Timelapse and slideshow video creator
 #
-# Jason Charcalla 06292016
+# copyright 2016 - Jason Charcalla 06292016
+#
+# WARNING: This will overwrite the images you run it against!
+#
 # Usage:
 #
 # All of the folowing options are required 
 #
-# -R Image resolution. 2k,4k,8k (translates to 16x9 2560x1440,3840x2160,5120x4320)
+# -R Image resolution. 2k,4k,5k,8k (translates to 16x9 2560x1440,3840x2160,5120x2880,7680x4320)
 # -F Frame rate 15,24,25,30,48,50,60
 # -D Still image durration in seconds for slideshoe. Use 0 for timelapse mode
 # -C Color of fade transition between still images in slideshow
@@ -22,6 +26,12 @@ print_usage() {
 # -I Input path containing image files (This will create a tmp dir in here)
 # -O Output path and filename for the resulting video
 # -E Image file type extension, This is case sensative. (JPG, jpg, png, etc)
+#
+# This option is optional
+# -A Specify an audio track to add. Shortest lenght file wins.
+#
+# Future development
+# -M <y/n> Inject metadata for youtube upload.
 #
 #
 # Docker usage:
@@ -37,11 +47,13 @@ EOF
 exit 1
 }
 
+MERGE_AUDIO=0
+
 if [ "$#" -le 7 ]; then
 	    print_usage
 fi
 
-while getopts h?R:F:D:C:T:I:O:E: arg ; do
+while getopts h?R:F:D:C:T:I:O:E:A: arg ; do
 	case $arg in
 		R) IMG_RESOLUTION=$OPTARG;;
 		F) FRAME_RATE=$OPTARG;;
@@ -52,6 +64,8 @@ while getopts h?R:F:D:C:T:I:O:E: arg ; do
 		I) IN_PATH=$OPTARG;;
 		O) OUTPUT=$OPTARG;;
 		E) IMG_TYPE=$OPTARG;;
+		A) AUDIO_TRACK=$OPTARG
+		   MERGE_AUDIO=1;;
 		h|\?) print_usage; exit ;;
 	esac
 done
@@ -98,15 +112,15 @@ case $IMG_RESOLUTION in
 	2k) H_RES=2560
             V_RES=1440
 	    BIT_RATE="16M";;
-	    #BIT_RATE="80M";;
 	4k) H_RES=3840
             V_RES=2160
-	    BIT_RATE="40M";;
-	    #BIT_RATE="40M";;
-	8k) H_RES=5120
+	    BIT_RATE="30M";;
+        5k) H_RES=5120
+            V_RES=2880
+            BIT_RATE="50M";;
+	8k) H_RES=7680
 	    V_RES=4320
 	    BIT_RATE="80M";;
-	    #BIT_RATE="16M";;
 esac
 # resize in place
 echo "Resolution set at ${H_RES}x${V_RES}"
@@ -192,12 +206,28 @@ done
 
 # create a video with ffmpeg from the images and image links
 echo "LETS MAKE A MOVIE!"
-ffmpeg -framerate ${FRAME_RATE} -i ${WORK_PATH}%06d.${IMG_TYPE} -preset medium -pix_fmt yuv420p -c:v libx264 -b:v ${BIT_RATE} -r ${FRAME_RATE} ${OUTPUT}
+ffmpeg -framerate ${FRAME_RATE} -y -i ${WORK_PATH}%06d.${IMG_TYPE} -preset medium -pix_fmt yuv420p -c:v libx264 -b:v ${BIT_RATE} -r ${FRAME_RATE} ${OUTPUT}
 #echo "ffmpeg -framerate ${FRAME_RATE} -i ${WORK_PATH}%06d.${IMG_TYPE} -c:v libx264 -b:v ${BIT_RATE} -r ${FRAME_RATE} ${OUTPUT}"
 
 # add audio track
+if [ ${MERGE_AUDIO} -eq 1 ]
+then
+	# Move the output video we just created
+	mv ${OUTPUT} ${WORK_PATH}intermediate.mp4
+	# add audio track from one of the videos, I should try to do this in the above step.
+	echo "Adding audio track: ffmpeg -i ${AUDIO_TRACK} -i ${WORK_PATH}intermediate.mp4 -c copy -map 1:v:0 -map 0:a:0 -shortest ${OUTPUT}"
+	ffmpeg -y -i ${AUDIO_TRACK} -i ${WORK_PATH}intermediate.mp4 -c copy -map 1:0 -map 0:0 -shortest ${OUTPUT}
+	# clean up the intermediate file
+	rm ${WORK_PATH}intermediate.mp4
+fi
+
+
+# inject 360 metadata for youtube
+#
+# Nothing to see here yet
 
 # Clean up time
+
 rm -rf "${WORK_PATH}"
 
 exit
