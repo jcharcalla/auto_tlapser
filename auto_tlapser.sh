@@ -124,7 +124,7 @@ case $IMG_RESOLUTION in
 esac
 # resize in place
 echo "Resolution set at ${H_RES}x${V_RES}"
-mogrify  -filter Lanczos -antialias -quality 95 -resize ${H_RES}x${V_RES}! ${IN_PATH}*.${IMG_TYPE}
+#mogrify  -filter Lanczos -antialias -quality 95 -resize ${H_RES}x${V_RES}! ${IN_PATH}*.${IMG_TYPE}
 
 # Function for creating transitions and links with new sequential names
 img_sequence()
@@ -167,7 +167,10 @@ img_sequence()
 	else
 		echo "Time lapse mode only"
 		# create sim link
-		ln -s ${FILENAME} ${WORK_PATH}${TMP_NAME}.${IMG_TYPE}	
+		#ln -s ${FILENAME} ${WORK_PATH}${TMP_NAME}.${IMG_TYPE}	
+                # when running docker in a vm on a mac with virtual box pass through file system links don't work. 
+                # I'll cheat because I need to in order to get this timelapse done and actually move the files.
+                mv ${FILENAME} ${WORK_PATH}${TMP_NAME}.${IMG_TYPE}
 		# advance the new temp file name every time.
 		TMP_NAME=$(echo "${TMP_NAME}+1"| bc | awk '{printf "%06d", $0}')
 	fi
@@ -206,7 +209,7 @@ done
 
 # create a video with ffmpeg from the images and image links
 echo "LETS MAKE A MOVIE!"
-ffmpeg -framerate ${FRAME_RATE} -y -i ${WORK_PATH}%06d.${IMG_TYPE} -preset medium -pix_fmt yuv420p -c:v libx264 -b:v ${BIT_RATE} -r ${FRAME_RATE} ${OUTPUT}
+ffmpeg -framerate ${FRAME_RATE} -y -i ${WORK_PATH}%06d.${IMG_TYPE} -preset medium -pix_fmt yuv420p -c:v libx264 -b:v ${BIT_RATE} -r ${FRAME_RATE} -s ${H_RES}x${V_RES} ${OUTPUT}
 #echo "ffmpeg -framerate ${FRAME_RATE} -i ${WORK_PATH}%06d.${IMG_TYPE} -c:v libx264 -b:v ${BIT_RATE} -r ${FRAME_RATE} ${OUTPUT}"
 
 # add audio track
